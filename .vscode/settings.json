@@ -1,0 +1,73 @@
+{
+	"editor.mouseWheelZoom": true,
+	"editor.tokenColorCustomizations": {
+		"textMateRules": [
+			{
+				"scope": "variable.other.jsdoc",
+				"settings": { "foreground": "#ba8ce9" }
+			},
+			{
+				"scope": "entity.name.type.instance.jsdoc",
+				"settings": { "foreground": "#975bd3" }
+			},
+			{
+				"scope": "storage.type.class.jsdoc",
+				"settings": { "foreground": "#3eb980" }
+			},
+			{
+				"scope": "comment.block.documentation",
+				"settings": { "foreground": "#119658" }
+			},
+
+			{
+				"scope": "comment.line",
+				"settings": {
+					"fontStyle": "italic",
+					"foreground": "#119658"
+				}
+			},
+			{
+				"scope": "punctuation.definition.comment",
+				"settings": { "foreground": "#4bcc90" }
+			}
+		]
+	},
+
+	"todohighlight.keywords": [
+        "DEBUG:",
+        "REVIEW:",
+        {
+            "text": "NOTE:",
+            "color": "#ff0000",
+            "backgroundColor": "yellow",
+            "overviewRulerColor": "grey"
+        },
+        {
+            "text": "HACK:",
+            "color": "#000",
+            "isWholeLine": false,
+        },
+        {
+            "text": "TODO:",
+            "color": "red",
+            "border": "1px solid red",
+            "borderRadius": "2px", //NOTE: using borderRadius along with `border` or you will see nothing change
+            "backgroundColor": "rgba(0,0,0,.2)",
+            //other styling properties goes here ... 
+        }
+    ],
+
+	"todo-tree.highlights.defaultHighlight": {
+		"icon": "alert",
+		"type": "text",
+		"border": "1px solid red",
+		"borderRadius": "2px",
+		"rulerColour": "red",
+		"foreground": "#e2dd1b",
+		"opacity": 0,
+		"iconColour": "darkred"
+	},
+
+	"scssFormatter.singleQuote": true,
+	"scssFormatter.trailingComma": "all",
+}

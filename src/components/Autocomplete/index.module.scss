@@ -1,0 +1,114 @@
+@use '/src/styles/utilities' as utils;
+@use '/src/styles/inputs' as input-styles;
+@use '/src/styles/colors' as colors;
+
+$default_width: 150px;
+
+.container {
+    @include utils.flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0;
+    z-index: 1;
+    min-width: $default_width;
+    transition: all 0.25s ease-in-out;
+
+    > div:nth-child(1) {
+        @include utils.flex;
+        flex-direction: row;
+        input {
+            @include input-styles.input;
+            flex-grow: 1;
+            height: 50px !important;
+            width: 100%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        > img {
+            width: 18px;
+        }
+    }
+
+    button > svg,
+    button > img {
+        width: 10px;
+        max-width: 10px;
+    }
+}
+
+.focusedContainer {
+    @extend .container;
+    min-width: calc(250px - 1rem);
+
+    .optionsList {
+        width: 250px;
+    }
+}
+
+.optionsList {
+    position: absolute;
+    width: $default_width;
+    top: 100%;
+    right: 0;
+    transition: all 0.25s ease-in-out;
+    background-color: colors.$background-color;
+    border-radius: input-styles.$border-radius;
+    border-top-left-radius: unset;
+    border: input-styles.$border-size solid colors.$border-color;
+    overflow-y: auto;
+    max-height: min(50lvh, 500px);
+    margin-bottom: 1rem;
+    scroll-behavior: smooth;
+
+    &::-webkit-scrollbar {
+        height: 5px;
+        width: 5px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: colors.$brand-background;
+        cursor: pointer;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: colors.$brand-main;
+        border-radius: 2px;
+        cursor: pointer;
+    }
+
+    .option {
+        height: 50px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.25rem;
+        padding: 0.25rem 0.5rem;
+        cursor: pointer;
+        transition: inherit;
+
+        img {
+            width: 18px;
+        }
+
+        span {
+            // font-size: 0.85rem;
+            color: colors.$brand-light-gray;
+        }
+
+        strong {
+            text-transform: uppercase;
+        }
+
+        &:hover {
+            background-color: colors.$background-hover-color;
+        }
+    }
+
+    .activeOption {
+        @extend .option;
+        background-color: colors.$background-hover-color;
+    }
+}

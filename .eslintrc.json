@@ -1,0 +1,18 @@
+{
+    "rules": {
+        "react/jsx-uses-react": "error",
+        "react/jsx-uses-vars": "error",
+        "react-hooks/exhaustive-deps": "off"
+    },
+    "overrides": [
+        {
+            "files": [
+                "**/*.js"
+            ],
+            "rules": {
+                // TODO: refactor
+                "react-hooks/exhaustive-deps": "off"
+            }
+        }
+    ]
+}

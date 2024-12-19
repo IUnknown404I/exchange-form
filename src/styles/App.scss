@@ -1,0 +1,22 @@
+@use './utilities' as utils;
+
+header {
+  @include utils.base-width;
+  gap: unset;
+
+  h1 {
+    font-size: 50px;
+    line-height: 60px;
+    margin-bottom: 0.5rem;
+    font-weight: normal;
+
+    @media only screen and (max-width: 500px) {
+      font-size: 40px;
+    }
+  }
+
+  span:nth-child(1) {
+    font-size: 20px;
+    line-height: 20px;
+  }
+}

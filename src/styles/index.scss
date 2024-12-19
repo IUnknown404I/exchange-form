@@ -1,0 +1,37 @@
+@use './utilities' as utils;
+@use './inputs' as input-styles;
+@import './resets';
+
+body {
+  margin: 0;
+  font-size: 16px;
+  font-family: 'ArialRegular', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+main {
+  @include utils.flex;
+  width: min(100vw, 1400px);
+  min-height: 100lvh;
+  padding: 1rem;
+  align-items: center;
+  justify-content: center;
+  margin-inline: auto;
+
+  @media only screen and (max-width: calc(input-styles.$container-width + 2rem)) {
+    gap: 2rem;
+  }
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+@font-face {
+  font-family: 'ArialRegular';
+  src:
+    local('ArialRegular'),
+    url('../fonts/arialmt.ttf') format('ttf');
+  font-weight: normal;
+}

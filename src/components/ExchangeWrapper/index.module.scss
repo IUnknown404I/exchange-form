@@ -1,0 +1,112 @@
+@use '/src/styles/utilities' as utils;
+@use '/src/styles/inputs' as input-styles;
+@use '/src/styles/colors' as colors;
+
+.container {
+    @include utils.base-width;
+    position: relative;
+    .fromError,
+    .toError {
+        position: absolute;
+        left: 0.5rem;
+        top: calc(100% + 0.5rem);
+        color: red;
+        font-size: 0.85rem;
+    }
+
+    @media only screen and (max-width: calc(input-styles.$container-width * 2)) {
+        gap: 3rem;
+        .exchangeContainer {
+            flex-direction: column;
+            align-items: flex-end;
+
+            svg {
+                transform: rotate(90deg);
+                width: 40px;
+                height: 40px;
+            }
+        }
+    }
+
+    @media only screen and (max-width: calc(input-styles.$container-width * 1.5)) {
+        .submitContainer > div {
+            flex-direction: column;
+            align-items: flex-end;
+            button {
+                width: 100%;
+            }
+        }
+    }
+}
+
+.exchangeContainer {
+    @include utils.flex;
+    width: 100%;
+    flex-direction: row;
+    margin-top: 1.5rem;
+
+    .fromContainer {
+        @include input-styles.container;
+        width: 100%;
+    }
+
+    .toContainer {
+        @include input-styles.container;
+        width: 100%;
+    }
+
+    svg {
+        width: 50px;
+        height: 50px;
+        cursor: pointer;
+    }
+}
+
+.submitContainer {
+    @include utils.flex;
+    width: 100%;
+
+    > div {
+        @include utils.flex;
+        flex-direction: row;
+        width: 100%;
+        gap: 1rem;
+    }
+
+    .ethereumAddressContainer {
+        @include input-styles.container;
+        position: relative;
+        width: 100%;
+
+        input {
+            letter-spacing: 1.5px;
+        }
+        .addressError {
+            color: red;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+    }
+
+    .submitButton {
+        border: unset;
+        background-color: colors.$background-blue-color;
+        transition: all 0.15s ease-in-out;
+        border-radius: input-styles.$border-radius;
+        cursor: pointer;
+        color: white;
+        min-width: 200px;
+        min-height: 50px;
+        text-transform: uppercase;
+
+        &:hover {
+            background-color: colors.$background-hover-blue-color;
+        }
+    }
+
+    .submitButtonDisabled {
+        @extend .submitButton;
+        cursor: not-allowed;
+        background-color: colors.$brand-light-gray !important;
+    }
+}

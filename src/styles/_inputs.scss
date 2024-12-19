@@ -1,0 +1,41 @@
+@use './colors' as colors;
+
+$container-width: 450px;
+$container-height: 50px;
+$border-size: 1px;
+$border-radius: 5px;
+
+@mixin container {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    width: $container-width;
+    height: $container-height;
+    background-color: colors.$background-color;
+    border-radius: $border-radius;
+    border: $border-size solid colors.$border-color;
+    padding: 0.25rem 0.5rem;
+
+    input {
+        @include input;
+        font-size: 0.85rem;
+    }
+
+    .verticalLine {
+        height: 75%;
+        border-left: 1px solid colors.$border-color;
+        width: 1px;
+    }
+}
+
+@mixin input {
+    height: 100%;
+    width: 100%;
+    outline: unset;
+    border: unset;
+    background-color: unset;
+    border-radius: $border-radius;
+}

@@ -1,0 +1,23 @@
+@use "/src/styles/inputs" as input-styles;
+@use "/src/styles/utilities" as utils;
+
+.iconButton {
+    border-radius: 50%;
+    border: unset;
+    cursor: pointer;
+    background-color: unset;
+    transition: all 0.15s ease-in;
+
+    color: utils.$background-blue-color;
+    &:hover {
+        color: utils.$background-hover-blue-color;
+    }
+
+    svg {
+        color: blue
+    }
+}
+
+.iconButton[data-background] {
+    background-color: attr(data-background color);
+}

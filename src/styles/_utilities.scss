@@ -1,0 +1,15 @@
+$background-blue-color: #11b3fe;
+$background-hover-blue-color: #0095e0;
+
+@mixin flex {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@mixin base-width {
+    @include flex;
+    align-items: flex-start;
+    width: min(100%, 1200px);
+    gap: 2rem;
+}
