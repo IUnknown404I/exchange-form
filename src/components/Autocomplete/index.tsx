@@ -222,7 +222,7 @@ const Autocomplete = <
 					placeholder='Search'
 					onFocus={onFocus}
 					onChange={onChange}
-					onKeyDown={(e) => handleKeyDown}
+					onKeyDown={handleKeyDown}
 					style={{ fontWeight: currency ? 'bold' : 'normal' }}
 				/>
 			</div>
