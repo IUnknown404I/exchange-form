@@ -53,9 +53,7 @@ const useExchangeData = (): UseExchangeHookReturnType => {
 	const [ethereumAddress, setEthereumAddress] = React.useState<null | string>(
 		null
 	);
-	const [ethereumError, setEthereumError] = React.useState<null | string>(
-		null
-	);
+	const [ethereumError, setEthereumError] = React.useState<string>('');
 	// fetched variables
 	const [allAvailableCurrencies, setAllAvailableAvailableCurrencies] =
 		React.useState<null | CurrencyItemType[]>(null);
@@ -113,12 +111,12 @@ const useExchangeData = (): UseExchangeHookReturnType => {
 
 	React.useEffect(() => {
 		if (!ethereumAddress) {
-			if (!!ethereumError) setEthereumError(null);
+			if (!!ethereumError) setEthereumError('');
 			return;
 		}
 		if (!ETHEREUM_ADDRESS_REGEX.test(ethereumAddress))
 			setEthereumError('invalid address');
-		else if (ethereumError) setEthereumError(null);
+		else if (ethereumError) setEthereumError('');
 	}, [ethereumAddress]);
 
 	return {

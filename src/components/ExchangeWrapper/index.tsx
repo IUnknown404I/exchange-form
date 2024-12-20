@@ -50,7 +50,21 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 
 	// delayed update options and their depecies according to input value
 	const debouncedExchangeAmountUpdate = useDebouncedCallback(() => {
-		console.log('fired!');
+		if (
+			!exchangeData.currentRecieveOption ||
+			!exchangeData.minExchangeAmount?.minAmount
+		)
+			return;
+		else if (
+			exchangeData.minExchangeAmount.minAmount > (sourceAmount as number)
+		) {
+			setError({
+				text: `minimal exchange amount is ${exchangeData.minExchangeAmount.minAmount}`,
+				placement: 'from',
+			});
+			return;
+		} else if (error) setError(null);
+
 		exchangeData
 			?.fetchEstimatedExchangeAmount({
 				fromAmount: sourceAmount as number,
@@ -71,23 +85,13 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 					return;
 				} else if (error) setError(null);
 				setTargetAmount(json.toAmount);
-			});
+			})
+			.catch(() => setTargetAmount(''));
 	}, DEFAULT_DELAY_MS);
 	// update exchange amount
 	React.useEffect(() => {
-		if (!exchangeData.minExchangeAmount?.minAmount) return;
-		else if (
-			exchangeData.minExchangeAmount.minAmount > (sourceAmount as number)
-		) {
-			setError({
-				text: `minimal exchange amount is ${exchangeData.minExchangeAmount.minAmount}`,
-				placement: 'from',
-			});
-			return;
-		} else if (error) setError(null);
-
 		debouncedExchangeAmountUpdate();
-	}, [sourceAmount]);
+	}, [sourceAmount, exchangeData.currentRecieveOption]);
 
 	function onSubmitHandler(e: React.FormEvent<HTMLFormElement>) {
 		if (!!onSubmit)
@@ -116,6 +120,7 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 						}
 						id='source-amount'
 						autoComplete='off'
+						placeholder='Choose currency and specify the amount'
 					/>
 					<div className={styles.verticalLine} />
 					<Autocomplete
@@ -140,12 +145,13 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 					<input
 						disabled
 						type='number'
-						value={targetAmount}
+						value={targetAmount ?? '-'}
 						onChange={(e) =>
 							setTargetAmount(Number(e.target.value) || '')
 						}
 						id='target-amount'
 						autoComplete='off'
+						placeholder='Choose both currencies'
 					/>
 					<div className={styles.verticalLine} />
 					<Autocomplete
@@ -172,6 +178,7 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 							type='text'
 							autoComplete='off'
 							id='ethereum-address'
+							placeholder='Specify your etherium address'
 							value={exchangeData.ethereumAddress.state}
 							onChange={(e) =>
 								exchangeData.ethereumAddress.setState(

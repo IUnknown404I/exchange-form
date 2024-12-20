@@ -2,9 +2,8 @@ import React, { HTMLAttributes, RefObject } from 'react';
 import styles from './index.module.scss';
 
 interface IconButtonProps
-	extends Omit<HTMLAttributes<HTMLButtonElement>, 'disabled' | 'className'> {
+	extends Omit<HTMLAttributes<HTMLButtonElement>, 'className'> {
 	icon: React.ReactNode;
-	disabled?: boolean;
 	fontSize?: string;
 	backgroundColor?: string;
 	ref?: RefObject<HTMLButtonElement>;
@@ -13,8 +12,8 @@ interface IconButtonProps
 const IconButton: React.FC<IconButtonProps> = (props) => {
 	return (
 		<button
+			type='button'
 			{...props}
-			disabled={props.disabled}
 			className={styles.iconButton}
 			style={{
 				width: 'fit-content',

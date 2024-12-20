@@ -29,5 +29,8 @@ export function exchangeFetch<T extends { [key: string]: any }>(
 		headers: { ...options?.requestInit?.headers, ...DEFAULT_HEADERS },
 	})
 		.then((res) => options?.thenCatch ?? res.json())
-		.catch((e) => options?.errorCatch ?? e);
+		.catch((e) => {
+			if (!!options?.errorCatch) options.errorCatch(e);
+			else throw e;
+		});
 }

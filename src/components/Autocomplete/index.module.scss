@@ -10,7 +10,6 @@ $default_width: 150px;
     justify-content: space-between;
     align-items: center;
     gap: 0;
-    z-index: 1;
     min-width: $default_width;
     transition: all 0.25s ease-in-out;
 
@@ -61,6 +60,7 @@ $default_width: 150px;
     max-height: min(50lvh, 500px);
     margin-bottom: 1rem;
     scroll-behavior: smooth;
+    z-index: 5;
 
     &::-webkit-scrollbar {
         height: 5px;
