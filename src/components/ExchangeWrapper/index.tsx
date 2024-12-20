@@ -113,11 +113,11 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 			<div className={styles.exchangeContainer}>
 				<div className={styles.fromContainer}>
 					<input
-						type='number'
 						value={sourceAmount}
 						onChange={(e) =>
 							setSourceAmount(Number(e.target.value) || '')
 						}
+						type='number'
 						id='source-amount'
 						autoComplete='off'
 						placeholder='Choose currency and specify the amount'

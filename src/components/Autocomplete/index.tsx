@@ -167,6 +167,9 @@ const Autocomplete = <
 			setCurrency(pickedOption);
 			setShowOptions(false);
 			setActiveOptionIndex(0);
+			setFilteredOptions(
+				filteredOptions.slice(activeOptionIndex, activeOptionIndex + 1)
+			);
 		}
 		function moveCurrentOptionToScreen(index: number) {
 			if (!listRef.current) return;
@@ -227,6 +230,7 @@ const Autocomplete = <
 				/>
 			</div>
 			<IconButton
+				tabIndex={-1}
 				ref={iconButtonRef}
 				icon={
 					!showOptions ? (
