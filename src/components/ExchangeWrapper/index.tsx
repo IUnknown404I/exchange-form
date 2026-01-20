@@ -18,6 +18,7 @@ export type ExchangeWrapperSubmitPropsType = {
 	recieveCurrency: CurrencyItemType;
 	ethereumAddress: string;
 };
+
 interface ExchangeWrapperI {
 	onSubmit?: (
 		e: React.FormEvent<HTMLFormElement>,
@@ -26,8 +27,15 @@ interface ExchangeWrapperI {
 }
 
 const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
-	const exchangeData = useExchangeData();
+	const {
+		currentExchangeOption,
+		currentRecieveOption,
+		minExchangeAmount,
+		fetchEstimatedExchangeAmount,
+		...exchangeData
+	} = useExchangeData();
 
+	// Keep inputs controlled as number or '' per owner request
 	const [sourceAmount, setSourceAmount] = React.useState<number | ''>('');
 	const [targetAmount, setTargetAmount] = React.useState<number | ''>('');
 	const [error, setError] = React.useState<null | {
@@ -35,71 +43,94 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 		placement: 'from' | 'to';
 	}>(null);
 
+	// Parse input safely while allowing zero and clearing invalid numbers
+	const parseAmount = React.useCallback((value: string): number | '' => {
+		const parsed = Number(value);
+		if (Number.isNaN(parsed)) return '';
+		return parsed;
+	}, []);
+
 	React.useEffect(() => {
-		if (!exchangeData.minExchangeAmount) {
+		if (!minExchangeAmount) {
 			setTargetAmount('');
 			return;
-		} else if (exchangeData.minExchangeAmount.minAmount === null) {
+		} else if (minExchangeAmount.minAmount === null) {
 			setTargetAmount('');
 			setError({ text: 'this pair is disabled now', placement: 'to' });
 			return;
 		} else if (error) setError(null);
 
-		setSourceAmount(exchangeData.minExchangeAmount.minAmount);
-	}, [exchangeData.minExchangeAmount]);
+		setSourceAmount(minExchangeAmount.minAmount);
+	}, [minExchangeAmount]);
 
-	// delayed update options and their depecies according to input value
-	const debouncedExchangeAmountUpdate = useDebouncedCallback(() => {
+	// Build latest-safe estimator (memoized to avoid stale closures)
+	const updateEstimatedAmount = React.useCallback(() => {
 		if (
-			!exchangeData.currentRecieveOption ||
-			!exchangeData.minExchangeAmount?.minAmount
+			!currentRecieveOption ||
+			!currentExchangeOption.state ||
+			!minExchangeAmount?.minAmount ||
+			sourceAmount === ''
 		)
 			return;
-		else if (
-			exchangeData.minExchangeAmount.minAmount > (sourceAmount as number)
-		) {
+
+		if (minExchangeAmount.minAmount > (sourceAmount as number)) {
 			setError({
-				text: `minimal exchange amount is ${exchangeData.minExchangeAmount.minAmount}`,
+				text: `minimal exchange amount is ${minExchangeAmount.minAmount}`,
 				placement: 'from',
 			});
 			return;
-		} else if (error) setError(null);
+		}
 
-		exchangeData
-			?.fetchEstimatedExchangeAmount({
+		if (error) setError(null);
+
+		fetchEstimatedExchangeAmount({
 				fromAmount: sourceAmount as number,
-				fromCurrency: exchangeData.currentExchangeOption.state.ticker,
-				fromNetwork: exchangeData.currentExchangeOption.state.network,
-				toCurrency: exchangeData.currentRecieveOption.state.ticker,
-				toNetwork: exchangeData.currentRecieveOption.state.network,
-				flow: exchangeData.minExchangeAmount.flow,
+				fromCurrency: currentExchangeOption.state.ticker,
+				fromNetwork: currentExchangeOption.state.network,
+				toCurrency: currentRecieveOption.state.ticker,
+				toNetwork: currentRecieveOption.state.network,
+				flow: minExchangeAmount.flow,
 				type: 'direct',
 			})
 			.then((json) => {
 				if (!isEstimatedExchangeAmounType(json)) return;
-				else if (json.toAmount === null) {
+				if (json.toAmount === null) {
 					setError({
 						text: 'this pair is disabled now',
 						placement: 'to',
 					});
 					return;
-				} else if (error) setError(null);
+				}
+				if (error) setError(null);
 				setTargetAmount(json.toAmount);
 			})
 			.catch(() => setTargetAmount(''));
-	}, DEFAULT_DELAY_MS);
-	// update exchange amount
+	}, [
+		sourceAmount,
+		currentExchangeOption.state,
+		currentRecieveOption,
+		minExchangeAmount,
+		error,
+	]);
+
+	// Delayed update options and their dependencies according to input value
+	const debouncedExchangeAmountUpdate = useDebouncedCallback(
+		updateEstimatedAmount,
+		DEFAULT_DELAY_MS
+	);
+
+	// Update exchange amount when inputs change
 	React.useEffect(() => {
 		debouncedExchangeAmountUpdate();
-	}, [sourceAmount, exchangeData.currentRecieveOption]);
+	}, [ sourceAmount ]);
 
 	function onSubmitHandler(e: React.FormEvent<HTMLFormElement>) {
 		if (!!onSubmit)
 			onSubmit(e, {
 				exchangeAmount: sourceAmount as number,
-				exchangeCurrency: exchangeData.currentExchangeOption.state,
+				exchangeCurrency: currentExchangeOption.state,
 				recieveAmount: targetAmount as number,
-				recieveCurrency: exchangeData.currentRecieveOption.state,
+				recieveCurrency: currentRecieveOption.state,
 				ethereumAddress: exchangeData.ethereumAddress.state,
 			});
 		else {
@@ -114,9 +145,7 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 				<div className={styles.fromContainer}>
 					<input
 						value={sourceAmount}
-						onChange={(e) =>
-							setSourceAmount(Number(e.target.value) || '')
-						}
+						onChange={(e) => setSourceAmount(parseAmount(e.target.value))}
 						type='number'
 						id='source-amount'
 						autoComplete='off'
@@ -124,11 +153,11 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 					/>
 					<div className={styles.verticalLine} />
 					<Autocomplete
-						currency={exchangeData.currentExchangeOption.state}
+						currency={currentExchangeOption.state}
 						setCurrency={
-							exchangeData.currentExchangeOption.setState
+							currentExchangeOption.setState
 						}
-						options={exchangeData.allAvailableCurrencies}
+						options={exchangeData.allAvailableCurrencies ?? []}
 						inputProps={{
 							id: 'source-currency',
 							autoComplete: 'off',
@@ -146,18 +175,15 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 						disabled
 						type='number'
 						value={targetAmount ?? '-'}
-						onChange={(e) =>
-							setTargetAmount(Number(e.target.value) || '')
-						}
 						id='target-amount'
 						autoComplete='off'
 						placeholder='Choose both currencies'
 					/>
 					<div className={styles.verticalLine} />
 					<Autocomplete
-						currency={exchangeData.currentRecieveOption.state}
-						setCurrency={exchangeData.currentRecieveOption.setState}
-						options={exchangeData.allAvailableCurrencies}
+						currency={currentRecieveOption.state}
+						setCurrency={currentRecieveOption.setState}
+						options={exchangeData.allAvailableCurrencies ?? []}
 						inputProps={{
 							id: 'target-currency',
 							autoComplete: 'off',
@@ -199,13 +225,13 @@ const ExchangeWrapper: React.FC<ExchangeWrapperI> = ({ onSubmit }) => {
 							!!error ||
 							!exchangeData.ethereumAddress.state ||
 							!!exchangeData.ethereumAddress.error ||
-							!exchangeData.minExchangeAmount
+							!minExchangeAmount
 						}
 						className={
 							!!error ||
 							!exchangeData.ethereumAddress.state ||
 							!!exchangeData.ethereumAddress.error ||
-							!exchangeData.minExchangeAmount
+							!minExchangeAmount
 								? styles.submitButtonDisabled
 								: styles.submitButton
 						}

@@ -26,6 +26,20 @@ export const module = {
 				},
 			],
 		},
+		{
+        test: /\.s[ac]ss$/i,
+        use: [
+          "style-loader",
+          "css-loader",
+          {
+            loader: "sass-loader",
+			api: "modern-compiler",
+            options: {
+              warnRuleAsWarning: true,
+            },
+          },
+        ],
+      },
 	],
 };
 export const output = {

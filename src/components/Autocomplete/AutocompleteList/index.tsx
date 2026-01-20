@@ -33,6 +33,7 @@ const AutocompleteList = <
 		setToPoint(DEFAULT_FROM);
 		if (ref.current) ref.current.scrollTo({ top: 0 });
 	}, [options]);
+	
 	// subscribe observer for options dynamic displaying
 	React.useLayoutEffect(() => {
 		const observer = new IntersectionObserver((entries) => {
@@ -46,11 +47,19 @@ const AutocompleteList = <
 	}, [options]);
 
 	return options.length ? (
-		<ul {...props} className={styles.optionsList} ref={ref}>
+		<ul
+			{...props}
+			ref={ref}
+			role='listbox'
+			id='autocomplete-list'
+			className={styles.optionsList}
+		>
 			{options?.slice(0, toPoint).map((option, index) => (
 				<li
+					role='option'
 					id={`${option.ticker}-${index}`}
 					key={`${option.ticker}-${index}`}
+					aria-selected={index === activeOptionIndex}
 					className={
 						index === activeOptionIndex
 							? styles.activeOption
@@ -63,6 +72,7 @@ const AutocompleteList = <
 					<span>{option.name}</span>
 				</li>
 			))}
+			
 			{options?.length > toPoint && (
 				<div
 					id='options-loader'

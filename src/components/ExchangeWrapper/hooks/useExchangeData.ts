@@ -15,7 +15,7 @@ import {
 	URL_MIN_EXCHANGE_AMOUNT,
 } from '../fetch/exchange-fetches';
 
-const ETHEREUM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/g;
+const ETHEREUM_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 
 type UseExchangeHookReturnType = {
 	currentExchangeOption: {
@@ -73,7 +73,7 @@ const useExchangeData = (): UseExchangeHookReturnType => {
 
 	const reverseCurrencies = () => {
 		setCurrentExchangeOption(currentRecieveOption);
-		setCurrentRecieveOption(currentExchangeOption);
+		setCurrentRecieveOption((prev) => currentExchangeOption ?? prev);
 	};
 
 	// initial fetching - all curencies

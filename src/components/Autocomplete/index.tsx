@@ -37,6 +37,7 @@ const Autocomplete = <
 	const listRef = React.useRef<HTMLUListElement>(null);
 	const containerRef = React.useRef<HTMLDivElement>(null);
 	const iconButtonRef = React.useRef<HTMLButtonElement>(null);
+	const optionsRef = React.useRef<T[]>(options ?? []);
 
 	const [value, setValue] = React.useState<string>('');
 	const [showOptions, setShowOptions] = React.useState<boolean>(false);
@@ -46,40 +47,52 @@ const Autocomplete = <
 	const [filteredOptions, setFilteredOptions] = React.useState<T[]>(
 		options ?? []
 	);
+	const [listMaxHeight, setListMaxHeight] = React.useState<number>(252);
+
+	// Pre-compute list height when options open to avoid SSR/window pitfalls
+	React.useLayoutEffect(() => {
+		if (typeof window === 'undefined' || !showOptions || !containerRef.current)
+			return;
+		const { top, height } = containerRef.current.getBoundingClientRect();
+		const available = window.innerHeight - (top + height) - 25;
+		setListMaxHeight(Math.max(Math.min(available, 252), 0));
+	}, [showOptions]);
 
 	// update input and common depencies
 	const onChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
 		setValue(e.currentTarget.value);
 		setActiveOptionIndex(0);
 		setShowOptions(true);
-		debouncedOptionsFilter(e.currentTarget.value, options);
+		debouncedOptionsFilter(e.currentTarget.value);
 		if (currency) setCurrency(null);
 	};
 
-	// delayed update options and their depecies according to input value
-	const debouncedOptionsFilter = useDebouncedCallback(
-		(newValue: string, options: T[]) => {
-			const parsedNewValue = newValue.toLowerCase().trim();
-			const foundOptions = !!parsedNewValue
-				? options.filter(
-						(ticker) =>
-							ticker.name
-								.toLowerCase()
-								.includes(parsedNewValue) ||
-							ticker.ticker.toLowerCase().includes(parsedNewValue)
-				  )
-				: options;
-			setFilteredOptions(foundOptions);
-		},
-		DEFAULT_DELAY_MS
-	);
+	// delayed update options and their dependants according to input value
+	const debouncedOptionsFilter = useDebouncedCallback((newValue: string) => {
+		const parsedNewValue = newValue.toLowerCase().trim();
+		const sourceOptions = optionsRef.current;
+		const foundOptions = parsedNewValue
+			? sourceOptions.filter(
+					(option) =>
+						option.name.toLowerCase().includes(parsedNewValue) ||
+						option.ticker.toLowerCase().includes(parsedNewValue)
+			  )
+			: sourceOptions;
+		setFilteredOptions(foundOptions);
+	}, DEFAULT_DELAY_MS);
 
 	// set active ticker index, value and filtered options according picked one
 	const onOptionClick = (
 		_: React.MouseEvent<HTMLLIElement, MouseEvent>,
 		labelIndex: number
 	) => {
-		if (typeof labelIndex !== 'number') return;
+		if (
+			typeof labelIndex !== 'number' ||
+			!filteredOptions.length ||
+			labelIndex < 0 ||
+			labelIndex >= filteredOptions.length
+		)
+			return;
 		const pickedOption = filteredOptions[labelIndex];
 		setValue(pickedOption.ticker.toUpperCase());
 		setCurrency(pickedOption);
@@ -94,40 +107,37 @@ const Autocomplete = <
 	};
 
 	// handle cleaning-operations on click-over the autocomplete component
-	const handleClickOver = React.useCallback(
-		(e: MouseEvent) => {
+	const handlePointerDown = React.useCallback(
+		(e: PointerEvent) => {
 			if (!showOptions) return;
-			const { target } = e;
-			if (
-				target instanceof Node &&
-				target.parentNode !== containerRef.current &&
-				target.parentNode !== iconButtonRef.current &&
-				!containerRef.current?.contains(target) &&
-				!iconButtonRef.current?.contains(target)
-			) {
-				// check for ticker's name been writed fully
-				const parsedValue = value.toLowerCase().trim();
-				const index = filteredOptions.findIndex(
-					(ticker) =>
-						ticker.ticker.toLowerCase() === parsedValue ||
-						ticker.name.toLowerCase() === parsedValue
-				);
-				// clear input and list if needed
-				if (index === -1) {
-					setValue('');
-					setFilteredOptions(options ?? []);
-				}
-				// set input value if user pass valid name but didnt click on ticker item
-				else {
-					const foundTicker = filteredOptions[index];
-					setActiveOptionIndex(index);
-					setValue(foundTicker.ticker.toUpperCase());
-					setCurrency(foundTicker);
-				}
-				setShowOptions(false);
+			const path = e.composedPath();
+			const clickedInside = path.some(
+				(node) =>
+					node === containerRef.current || node === iconButtonRef.current
+			);
+			if (clickedInside) return;
+			// check for ticker's name been writed fully
+			const parsedValue = value.toLowerCase().trim();
+			const index = filteredOptions.findIndex(
+				(option) =>
+					option.ticker.toLowerCase() === parsedValue ||
+					option.name.toLowerCase() === parsedValue
+			);
+			// clear input and list if needed
+			if (index === -1) {
+				setValue('');
+				setFilteredOptions(optionsRef.current);
 			}
+			// set input value if user pass valid name but didnt click on ticker item
+			else {
+				const foundTicker = filteredOptions[index];
+				setActiveOptionIndex(index);
+				setValue(foundTicker.ticker.toUpperCase());
+				setCurrency(foundTicker);
+			}
+			setShowOptions(false);
 		},
-		[options, showOptions, filteredOptions, value, setValue]
+		[showOptions, filteredOptions, value, setValue]
 	);
 
 	// handle keys and scrolling-element
@@ -162,6 +172,12 @@ const Autocomplete = <
 		}
 
 		function selectCurrentOption() {
+			if (
+				activeOptionIndex < 0 ||
+				!filteredOptions.length ||
+				activeOptionIndex >= filteredOptions.length
+			)
+				return;
 			const pickedOption = filteredOptions[activeOptionIndex];
 			setValue(pickedOption.ticker.toUpperCase());
 			setCurrency(pickedOption);
@@ -173,21 +189,22 @@ const Autocomplete = <
 		}
 		function moveCurrentOptionToScreen(index: number) {
 			if (!listRef.current) return;
-			document
-				.querySelector<HTMLLIElement>(
-					`#${filteredOptions[index].ticker}-${index}`
-				)
-				?.scrollIntoView();
+			const optionNode = listRef.current.children[
+				index
+			] as HTMLLIElement | null;
+			optionNode?.scrollIntoView({ block: 'nearest' });
 		}
 	}
 
 	// subscribe to window click event
 	React.useEffect(() => {
-		window.addEventListener('click', handleClickOver);
+		// Listen for outside clicks while dropdown is open
+		window.addEventListener('pointerdown', handlePointerDown);
 		return () => {
-			window.removeEventListener('click', handleClickOver);
+			window.removeEventListener('pointerdown', handlePointerDown);
 		};
-	}, [handleClickOver]);
+	}, [handlePointerDown]);
+
 	// sync with passed options and changed (by reverse, for example) input value
 	React.useEffect(() => {
 		if (currency) {
@@ -199,14 +216,21 @@ const Autocomplete = <
 						option.ticker === currency.ticker
 				);
 				debouncedOptionsFilter(
-					currency.ticker,
-					options?.slice(newIndex, newIndex + 1) ?? []
+					currency.ticker
 				);
 			}
 		}
 	}, [currency]);
+
 	React.useEffect(() => {
-		setFilteredOptions(options ?? []);
+		optionsRef.current = options ?? [];
+		setFilteredOptions(optionsRef.current);
+		setActiveOptionIndex((prev) =>
+			Math.min(
+				Math.max(prev, optionsRef.current.length ? 0 : -1),
+				Math.max(optionsRef.current.length - 1, -1)
+			)
+		);
 	}, [options]);
 
 	return (
@@ -227,11 +251,16 @@ const Autocomplete = <
 					onChange={onChange}
 					onKeyDown={handleKeyDown}
 					style={{ fontWeight: currency ? 'bold' : 'normal' }}
+					role='combobox'
+					aria-expanded={showOptions}
+					aria-controls='autocomplete-list'
 				/>
 			</div>
+			
 			<IconButton
-				tabIndex={-1}
+				tabIndex={0}
 				ref={iconButtonRef}
+				aria-label={showOptions ? 'Close list' : 'Open list'}
 				icon={
 					!showOptions ? (
 						<img src='icons/arrow.svg' alt='open icon' />
@@ -249,20 +278,7 @@ const Autocomplete = <
 					activeOptionIndex={activeOptionIndex}
 					onClickCallback={onOptionClick}
 					style={{
-						maxHeight:
-							Math.max(
-								window
-									? window.innerHeight -
-											(!!containerRef.current
-												? containerRef.current.getBoundingClientRect()
-														.top +
-												  containerRef.current.getBoundingClientRect()
-														.height
-												: 0) -
-											25
-									: 0,
-								252
-							) + 'px',
+						maxHeight: `${listMaxHeight}px`,
 					}}
 				/>
 			)}
